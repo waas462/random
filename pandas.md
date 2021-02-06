@@ -21,7 +21,7 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
 ```
 
 **複数のCSVファイルを読み込**
-
+```py
     import glob
     import pandas as pd
 
@@ -33,6 +33,7 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
         return pd.concat([pd.read_csv(f, **kwargs) for f in flist], ignore_index=True)
 
     df_itr = get_merged_csv(files, sep='\t', skiprows=5)
+```
 
 **ファイル名を条件指定して複数ファイルの読み込み**
 
