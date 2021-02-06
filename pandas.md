@@ -9,8 +9,9 @@ df = get_merged_csv(files, sep=',', encoding="SHIFT-JIS", thousands=',', skiprow
 ```
 
 # 時系列データの読み込み
+```py
 pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
-
+```
 
 ## 配列から作成
     pd.DataFrame({
