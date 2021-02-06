@@ -14,10 +14,11 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
 ```
 
 ## 配列から作成
+```py
     pd.DataFrame({
         'session_id': train_sessions
     })
-
+```
 
 **複数のCSVファイルを読み込**
 
