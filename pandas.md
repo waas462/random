@@ -36,7 +36,7 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
 ```
 
 **ファイル名を条件指定して複数ファイルの読み込み**
-
+```py
     import os
     import glob
     import pandas as pd
@@ -50,13 +50,14 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
     df = get_merged_csv(glob.glob(fmask), index_col=None, usecols=['col1', 'col3'])
 
     print(df.head())
+```
 
 **特定列の読み込み**
-
+```py
     data = pd.read_csv('data.csv', usecols=['ID', 'Status'])
-
+```
 **読込でメモリに乗らないサイズの場合**
-
+```
     # 前処理（これでサイズが減らないとchunkしても乗らない）
     def preprocess(x):
         # 不要な行, 列のフィルタなど、データサイズを削減する処理
@@ -67,14 +68,23 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
 
     # 前処理して積み上げ
     df = pd.concat((preprocess(r) for r in reader), ignore_index=True)
+```
+
 ## dict → df
+```py
     # 辞書からdfを作成（indexの数があっている必要がある）
     pd.DataFrame(dic, index=['i',])
-## df → list
-    df.columns.values
-## df → dict
-    dict(df_category.reset_index().values)
+```
 
+## df → list
+```py
+    df.columns.values
+```
+
+## df → dict
+```py
+    dict(df_category.reset_index().values)
+```
 
 # 代入
 
@@ -82,14 +92,20 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
 
 # 抽出
 ## 特定列をgroupbyしてみたい
+```py
     # groupbyで指定した列はindexで返される事を利用
     df2.groupby(['week_n', 'early_week', 'early_week_tmp', 'test']).count().index
+```
+
 ## 特定の文字列を含むレコードを抽出
+```py
     df[df['colum name'].str.contains('find word')]
+```
+
 ## query
 
 ※カラムがobject型やstr型の場合、値を""で括る必要あり
-
+```py
     df_itr.query('PERIOD >= "2020-01-01"')
     df_itr.query('CATEGORY_PATH2 == "3rd Party Data (3rd Party Data)"')
     df_itr.query('CATEGORY_PATH6.isnull()', engine='python')
@@ -102,11 +118,20 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
     # where not like in
     not_like_description = ['abc']
     df2 = df2.query(f"Description != {not_like_description}")
+```
+
 ## 複数キーワード抽出 isin
+```py
     df[df['state'].isin(['NY', 'TX'])]
+```
+
 ## カラムのAND条件
+```py
     train_[(train_['installation_id'] == '0001e90f') & (train_['event_id'] == '5e812b27')]
+```
+
 ## インデックスを条件に抽出
+```py
     # インデックスを条件に抽出
     df = df[df.index.get_level_values('year') >= 2018]
     df.iloc[df.index.get_loc('1009399'), 0:]
@@ -115,7 +140,10 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
     df_new.query(f'index == {list(sim_users.index)}')
     # ↑と同じだが速度はこちらがは早そう
     df_new.loc[sim_users.index, :]
+```
+
 ## サンプリング
+```py
     df.sample(frac=0.04)
     df.sample(n=3, random_state=0)
 
@@ -125,7 +153,10 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
 
     # 元のグループの比率を維持してサンプリングしたい
     gdf.apply(lambda x: x.sample(n=round(len(x) * 0.5)))
+```
+
 ## 重複行
+```py
     # 重複を判定する列を指定: 引数subset
     df.duplicated(subset='ユニークID')
 
@@ -138,11 +169,12 @@ pd.read_csv('./train.csv', parse_dates=['date'], index_col='date')
 
     # 重複した行カウント
     df.duplicated().sum()
-
+```
 
 ## ソート
-
+```py
 sort_index() か、 sort_values()
+
 # 絶対値でソート
 
     df.reindex(df.loc[:, i].abs().sort_values().index)
@@ -176,13 +208,17 @@ axis=1で列をソートできる
         na_position='last',
         sort_remaining=True,
         by=None)
+```
 
 # ユニーク集計ソート
-
+```py
     pd.Series(df.iloc[:,1]).value_counts().sort_index()
+```
+
 # DataFrame操作
 ## 列追加
 
+```py
 **列同士の文字列を結合**
 
     df['name_state'] = df['name'].str.cat(df['state'], sep='_')
@@ -192,17 +228,21 @@ axis=1で列をソートできる
 
     # 二つの文字列を結合
     df['early_week'] = df[['startday', 'week_n']].apply(lambda x: '{}-W{}'.format(x[0].year, x[1]), axis=1)
-
+```
 
 
 ## ブール
+```py
     # series.str.containsで文字列検索を正規表現で
     df['店'].str.contains('昭和シェル.*|Ｄｒ．Ｄｒｉｖｅ.*') | df['店'].str.contains('西松屋.*')
 
     df['bool'] = False
     for word in list(replace_dict.keys()):
         df['bool'] = df['店'].str.contains(word) | df['bool']
+```
+
 ## DF結合
+```py
     pd.merge(df_itr, df_rule_reduce, how='left', left_on='acount_id', right_on='acount')
 
 sort=Falseにしないと、カラム順が昇順に並び替えられてしまう
@@ -210,8 +250,10 @@ sort=Falseにしないと、カラム順が昇順に並び替えられてしま�
 
     pd.concat([df_1, df_2], sort=False)
 
-# 辞書をマージする (キー重複した場合は、Value をリスト化)
+```
 
+# 辞書をマージする (キー重複した場合は、Value をリスト化)
+```py
     def merge_dicts(dicts_list):
         d = {}
         for dict in dicts_list:
@@ -224,13 +266,17 @@ sort=Falseにしないと、カラム順が昇順に並び替えられてしま�
 
     D = merge_dicts( [{'通勤手当': '30'},  {'通勤手当': '440'},  {'aa': '44'}])
     print(D)
-## 分割
+```
 
+## 分割
+```py
 一つのカラムに複数情報（カンマ区切りなどで）が入っている場合に新たにカラムとして分割する
 
     sample_submission['id'].str.split('_', expand=True)
-## 削除
+```
 
+## 削除
+```py
 subsetで指定した行に欠損値がある列を削除
 
     df.dropna(subset=[0, 4], axis=1)
@@ -238,12 +284,13 @@ subsetで指定した行に欠損値がある列を削除
 行に1つでもNaNが含まれるとその行が削除
 
     df_sample.dropna(how='any', axis=0, inplace=True)
-
+```
 
 ## 欠損値
 
 pandasにおいては、None, np.nan, math.nanおよびpd.np.nanが欠損値NaNとして扱われる
 
+```py
 nullの確認
 
     df['支払い金額'].isnull()
@@ -294,13 +341,13 @@ nullの確認
 
     # 行または列に一つでもTrueが含まれているとTrueを返す
     df2.isnull().any(axis=1)
-
+```
 
 
 ## value置換
 
 辞書を使った置換
-
+```py
     # dictをDFから生成
     item_name_dict = dict(df_category.reset_index().values)
 
@@ -317,33 +364,35 @@ nullの確認
         'ビバホーム.*' : 'ホームセンター',
         }
     df[['ご利用先など']].replace(replace_dict, regex=True).drop_duplicates().style
-
+```
 
 ## column置換
 
-
+```py
     # カラムリネーム
     df_org.rename(columns={'A': 'a'}, index={'ONE': 'one'}, inplace=True)
     # ラムダ式や関数で一括処理
     df.rename(columns=str.lower, index=str.title)
     # 全カラムスペースを、_に置換
     df3 = df2.rename(columns=lambda s: s.replace(" ","_"))
+```
 
 列名にプレフィックス（接頭辞）、サフィックス（接尾辞）を追加
-
+```py
     df.add_prefix('X_')
     df.add_suffix('_X')
+```
 
 行名・列名をすべて新しい値にする
-
+```py
     df.index = [1, 2, 3]
     df.columns = ['a', 'b', 'c']
-
+```
 
 ## pitvot & melt
 
 pivot
-
+```py
     df.pivot_table(index=['industry'],  # pivot後の行
                   columns=['platform'], # pivot後の列
                   values='saved_click', # pivotの集計値
@@ -362,7 +411,7 @@ pivot
 
 逆pivot(melt)
 一つのカラムに複数情報が入っている場合、それを列に分解し、meltによって行として分解する（下では|で区切られたIDを例としている）
-```
+```py
 
     # カラム名
     base_colmuns = df_rule.columns.values.tolist()
@@ -378,11 +427,12 @@ pivot
                               var_name='item',          # meltしたカラム名が入ったカラム名
                               value_name='raiting'      # 値のカラム名
     )
-
+```
 
 ## pivotしたものを元に戻す
 https://stackoverflow.com/questions/51078388/how-to-melt-first-level-column-in-multiindex-with-pandas
 
+```py
     df=pd.DataFrame(np.zeros((3,6)))
     df.columns=pd.MultiIndex.from_arrays([['a','a','b','b','c','c'],[1,2,1,2,1,2]])
     df['a']=10
@@ -396,13 +446,15 @@ https://stackoverflow.com/questions/51078388/how-to-melt-first-level-column-in-m
             .reset_index(level=1, drop=True)
             .rename_axis('names')
             .reset_index())
+```
+
 ## groupby
 
 Python pandas データ選択処理をちょっと詳しく <中編> - StatsFragments
 まとめたい
 
 単純に全カラム
-
+```py
     df.sum()
 
 
@@ -413,46 +465,52 @@ Python pandas データ選択処理をちょっと詳しく <中編> - StatsFrag
     df.groupby('Year').transform(np.sum)
     # 行数を変えずに移動平均
     dt[["id", lag_col]].groupby("id")[lag_col].transform(lambda x : x.rolling(win).mean())
+```
 
 ユニークな値のサイズ
-
+```py
     df_itr.groupby('CATEGORY_ID').size()
+```
 
 グループ単位に処理する（下の例だとaccount_id毎にループ）
-
+```py
     for i, id in df.groupby('account_id', sort=False):
         print(id)
+```
 
 key単位の件数取得
-
+```py
     train.groupby(['event_id', 'event_code'])['event_id'].count()
     df_itr.groupby(['CATEGORY_ID', 'SITE_ID']).size()
-
+```
 複数カラムを一度に集計
-
+```py
     df_itr.groupby(['SITE_ID', 'SITE_NAME', 'PERIOD']) \
         .agg(category_count=('CATEGORY_ID', 'count'),    # category_count はカラム名
             exitst_sum=('EXISTING_PROFILES', 'sum'),
             newly_sum=('NEWLY_TAGGED_PROFILES', 'sum'))
+```
 
 統計量作成後、リネーム
-
+```py
     spectrum_agg = spectrum.groupby("spectrum_filename")["intensity"].agg(["max", "min", "mean", "std"])
     spectrum_agg.columns = ["intensity_" + c for c in spectrum_agg.columns]
-
+```
 
 # 集約関数作成して
-
+```py
     def peak_near_sum(x):
         i = np.argmax(x)
         z = x[i - 10:i + 10]
         return np.sum(z) / x[i]
     # aggに渡すとき、どの値を引数に渡すか指定する必要がある（下の"intensity"）
     spectrum.groupby('spectrum_filename')["intensity"].agg(peak_near_sum=peak_near_sum)
+```
 
 下のように書けば、別々の値に対して集約を一発で可能だし、分かりやすい
  https://qiita.com/mk_GF/items/9635b7fc84d38365470a
 
+```py
     spectrum.groupby('spectrum_filename').agg( \
       intensity_peak_near_sum=('intensity', peak_near_sum),
       intensity_max=('intensity', 'max'),
@@ -460,9 +518,10 @@ key単位の件数取得
       intensity_mean=('intensity', 'mean'),
       intensity_std=('intensity', 'std')
       )
-
+```
 
 ## 標準化
+```py
     # DataFrameの標準化（inverse使いたいのでsklearn）
     from sklearn.preprocessing import StandardScaler
     norm_target_col = ['total_click', 'fraud_rate', 'saved_click']
@@ -478,35 +537,40 @@ key単位の件数取得
 
     for col in norm_target_col:
         data[col + '_norm'] = data[[col]].apply(lambda x : ((x - x.mean()) / x.std() ))
+```
 
 # データ型変換
 ## 型変換 astype
+```py
     df = df.astype({'a': float})
     df['staff'].astype(int)
-
+```
 
 ## 日付
 
 # 日付フォーマット変換
-
+```py
     df2['date'].dt.strftime('%Y-%m-%d')
 
     df['日付'] = pd.to_datetime(df['日付'])
+```
 
 日付リストの生成
-
+```py
     # 後ろへ30日ずつ5回分
     days1 = pd.date_range(end='2020-02-18', freq='30D', periods=5).to_list()
     # 前へ30日ずつ5回分
     days2 = pd.date_range(start='2020-02-18', freq='30D', periods=5).to_list()
     days = days1 + days2
     days.sort()
-
+```
 
 
 # 可視化
 ## 相関係数
+```py
     train.corr()['target'].sort_values()
+```
 
 `df.corr(df, method=)`
 - 'pearson': ピアソンの積率相関係数（デフォルト）
@@ -516,15 +580,16 @@ key単位の件数取得
 ## df.plot
 
 複数の列を重ねてプロットしたい場合
-
+```py
     ax = df.plot(y='sepal_length')
     df.plot(y='sepal_width', ax=ax)
 
     # これだと一発
     df[['sepal_length', 'sepal_width']].plot()
-
+```
 
 ## pandas-profiling
+```py
     # 最新バージョン
     !pip install pandas-profiling==2.8.0
     # matplotlib日本語化
@@ -538,12 +603,16 @@ key単位の件数取得
     profile = pdp.ProfileReport(df)
     profile.to_file("ProfileReport.html")
     HTML(filename='ProfileReport.html')
+```
+
 ## DataFrameの表示
+```py
     pd.set_option('display.max_columns', 100)
     pd.set_option('display.max_rows', 100)
+```
 
 with句を使って一時的に表示範囲を広げたりするときに使う
-
+```py
     # 最大表示行数(defult:60)None全行表示
     with pd.option_context('display.max_rows', 100,
         'display.max_columns', 100, # 最大表示列数(defult:20)
@@ -553,9 +622,10 @@ with句を使って一時的に表示範囲を広げたりするときに使う
         'display.precision', 6, # 小数点以下桁数(defult:6)元のデータの値は以降の桁の情報も保持している
         ):
         display(df)
+```
 
 dataframe へ符号に応じてデータフレーム列の値を緑または赤に色付けする関数を適用
-
+```py
     def color_negative_red(value):
         """
         Colors elements in a dateframe
@@ -571,17 +641,19 @@ dataframe へ符号に応じてデータフレーム列の値を緑または赤�
             color = 'black'
         return 'color: %s' % color
     df.style.applymap(color_negative_red, subset=['total_amt_usd_diff','total_amt_usd_pct_diff'])
+```
 
 データフレームに値の表示書式を適用する
-
+```py
     (df.style
     .applymap(color_negative_red, subset=['total_amt_usd_diff','total_amt_usd_pct_diff'])
     .format({'total_amt_usd_pct_diff': "{:.2%}"}))
+```
 
 データフレーム要素に任意のCSSを適用
 [スタイルシートリファレンス（目的別）](http://www.htmq.com/style/)
 シンプル表示
-
+```py
     # Set CSS properties for th elements in dataframe
     th_props = [
         ('font-size', '11px'),
@@ -600,13 +672,13 @@ dataframe へ符号に応じてデータフレーム列の値を緑または赤�
         dict(selector="td", props=td_props)
     ]
     df_pivot.style.set_table_styles(styles)
-
+```
 
 例：シンプル＋マウスポイント行色付け
 # color (HTMLで使える色の文字列)
 # https://colorate.azurewebsites.net/ja/ColorNames
 # マウスポイントの行を色付け(th,tdに'background-color'を設定しているとダメ)
-
+```py
     def hover(hover_color="LightGray"):
         return dict(selector="tr:hover",
             props=[("background-color", "%s" % hover_color)])
@@ -635,10 +707,11 @@ dataframe へ符号に応じてデータフレーム列の値を緑または赤�
                 props=[("caption-side", "bottom")])
     ]
     df_pivot.fillna("").style.set_table_styles(styles).set_caption("Hover to highlight.")
-
+```
 
 カスタム背景色のグラデーションとカスタムキャプションの適用
 
+```py
     # Set colormap equal to seaborns light green color palette
     cm = sns.light_palette("green", as_cmap=True)
     (df.style
@@ -647,15 +720,17 @@ dataframe へ符号に応じてデータフレーム列の値を緑または赤�
     .set_caption('This is a custom caption.')
     .format({'total_amt_usd_pct_diff': "{:.2%}"})
     .set_table_styles(styles))
+```
 
 # seabornのカラーマップを利用
-
+```py
     import seaborn as sns
     cm = sns.light_palette("green", as_cmap=True)
     df_pivot.fillna(0).style.background_gradient(cmap=cm)
-
+```
 
 ## df.style
+```py
     # styleは上から順番につけられるっぽい（上書きされる）
 
     # 各セルの値に応じてカラーマップを適用
@@ -713,6 +788,8 @@ dataframe へ符号に応じてデータフレーム列の値を緑または赤�
         df.style.applymap(color_negative_red).apply(highlight_max))
         # フロートの精度を制御
         df.style.applymap(color_negative_red).apply(highlight_max).set_precision(2)
+```
+
 # ipython マジックコマンド
 
 マジックコマンドの末尾に「？」を追加して実行すると、そのコマンドの「docstring」が表示され、末尾に「??」を追加すると、そのコマンドのソースコードが表示
@@ -751,25 +828,19 @@ Notebook上でOSのシェルのコマンドを実行する
 - %%python：pythonのコードの記述、実行を可能にしま
 
 
-
-
-
-#
-
-
-
-
 # その他
 ## DataFrame同士が同じである事
+```py
     # DFを比較できる条件（同じ形状、同じindex、同じcolumn）
     # DataFrame同士の要素一致確認（全ての要素が一致していれば片方の全要素数と同じになる）
     def dataframe_attr_match(df1, df2):
     print(f'DF 片方のsize:{df1.size}')
     print(f'DF 一致要素数:{(df1.sort_index(axis=1).sort_index(axis=0) == df2.sort_index(axis=1).sort_index(axis=0)).sum().sum()}')
     dataframe_attr_match(df_final, df_final2)
-
+```
 
 ## 処理時間計測
+```py
     # 処理時間、メモリ、件数の比較
     import time
     for n in [1000, 10000, 100000]:
@@ -779,28 +850,31 @@ Notebook上でOSのシェルのコマンドを実行する
         mem = df_final.memory_usage(deep=True).sum() / 1024**2
         t2 = time.time()
     print(f'{n}\t{mem}\t{t2-t1}')
+```
 
-
-## **カラムごとのユニーク数とユニーク値の表示**
+## カラムごとのユニーク数とユニーク値の表示
+```py
     for col, values in train.iteritems():
         num_uniques = values.nunique()
         print ('{name}: {num_unique}'.format(name=col, num_unique=num_uniques))
         print (values.unique())
         print ('\n')
-# 特徴量生成
+```
 
+# 特徴量生成
 
 ## dummy化 one-hot-encoding , one hot
 
 カテゴリカラムをonehot化する（元のカラムは削除する）
-
+```py
     df = pd.concat([df, pd.get_dummies(df['category'])], axis=1).drop('category', axis=1)
 
     # 分割後のからｍカラムにprefixを付けたい（接頭語）
     pd.concat([df, pd.get_dummies(df['early_late_month'], prefix='early_late_month')], axis=1).drop('early_late_month', axis=1)
+```
 
 複数要素を分割して列としてdummy化する
-
+```py
     import pandas as pd
     d = {'col1': ['a,b', 'b', 'c,d', 'a,c'], 'col2': [3, 4, 5, 6]}
 
@@ -809,22 +883,24 @@ Notebook上でOSのシェルのコマンドを実行する
 
     df_sample = df.sample(n=100, random_state=0)
     df_sample.dropna(how='any', axis=0, inplace=True)
+```
 
 # リスト型をdummy化
-
+```py
     pd.concat([df_sample['bk_uuid'], df_sample['category_id'].str.get_dummies(sep=',').astype(dtype=int)], axis=1).sort_index()
+```
 
 # csv形式をdummy化
-
+```py
     df_sample['category_id'] = df_sample['category_id'].str.split(',')
     pd.concat([df_sample['bk_uuid'], pd.get_dummies(df_sample['category_id'].apply(pd.Series).stack()).groupby(level=0).apply(sum).astype(dtype=int)], axis=1).sort_index()
-
+```
 
 ## 時系列データ
 
 rollingの第1引数としてwindowサイズを指定
 
-
+```py
     # 移動平均
     df.rolling(5).mean()
 
@@ -835,33 +911,35 @@ rollingの第1引数としてwindowサイズを指定
 
     # 行数を変えずに移動平均
     dt[["id", lag_col]].groupby("id")[lag_col].transform(lambda x : x.rolling(win).mean())
-
+```
 
 ## Label Encoding
+```py
     # categoryに変換後、cat.codes
     df = pd.DataFrame(d)
     df['city'] = df['city'].astype('category')
     df.dtypes
 
     df['label_enc'] = df['city'].cat.codes
-
+```
 
 ## Count Encoding
+```py
     # method 1
     count_mean = df.groupby('city').target.count()
     df['count_enc'] = df['city'].map(count_mean)
 
     # method 2
     df['count_enc'] = df.groupby('city')['target'].transform('count')
-
+```
 
 ## LabelCount (Count Rank) Encoding
 
 カテゴリ変数の出現回数が多い順に順位づけ
-
+```py
     count_rank = df.groupby('city')['target'].count().rank(ascending=False)
     df['count_rank'] = df['city'].map(count_rank)
-
+```
 
 ## Target Encoding
 
@@ -874,27 +952,29 @@ Mean EncodingやLikelihood Encodingとも呼ばれる手法
 ただし、データセットが学習データとテストデータに分かれている場合、
 テストデータの目的変数は未知であるため、演算は学習データに対しておこない、得られた特徴量をテストデータ内のカテゴリへ適用する。
 この部分に注意しないと、Cross Validation をおこなったときにデータがリークすることになってしまう。
-
+```py
     # method 1
     target_mean = df.groupby('city').target.mean()
     df['target_enc'] = df['city'].map(target_mean)
 
     # method 2
     df['target_enc'] = df.groupby('city')['target'].transform('mean')
-
+```
 
 ## One hot encoding
+```py
     oh_enc = pd.get_dummies(df['city'], prefix='gender')
     df = pd.concat([df, oh_enc], axis=1)
-
+```
 
 ## Frequency Encoding
+```py
     for col in cat_cols:
         freq_encoding = train[col].value_counts()
         # ラベルの出現回数で置換
         train[col] = train[col].map(freq_encoding)
         test[col] = test[col].map(freq_encoding)
-
+```
 
 
 # パフォーマンス
@@ -917,21 +997,22 @@ Mean EncodingやLikelihood Encodingとも呼ばれる手法
         - apply は利便性を重視したメソッドのため、パフォーマンスを気にする場合は避けたほうがよい。
 
 # np.vectorize
-
+```py
     def py_sigmoid(x):
         return 1/ (1+math.exp(-x))
     vsigmoid = np.vectorize(py_sigmoid)
     vsigmoid(data))
+```
 
 numpy配列に一度変換し、処理を行い、またpandasに戻したほうがはやいこともある
-
+```py
     import numpy as np
 
     data_np = np.asarray(data)
     for row in data_np:
         pass
     data = pd.DataFrame(data_np)
-
+```
 
 集計や結合
 
@@ -948,38 +1029,43 @@ numpy配列に一度変換し、処理を行い、またpandasに戻したほう
     - ユニークかつソートしておく
 - 欠損値 ( NaN ) が無いほうが速い
 - object 型内での型の混在 (文字列と数値が混ざっている) していると遅い
+```py
     df['z'] = df['z'].astype('category')
     %timeit df.groupby('z').mean()
-
+```
 
 pd.concatは
 
 __getattr__のオーバーヘッドについて
 pandas.Series型がデータサイズ分作成される
-
+```py
     for idx,row in df.iterrows():
         row.a # 27秒
+```
 
 Seriesの生成を避ける
-
+```py
     for idx in range(df.shape[0]):  # shapeのところ.indexの方がスマートかも
         df.a.iloc[idx] # 10秒
+```
 
 __getattr__ のオーバーヘッドを減らす（先にdf.a取得しておく）
 
+```py
     df_a = df.a
     for idx in range(df.shape[0]):
         df_a.iloc[idx] # 6.4秒
+```
 
 valuesでnumpy array型にし、かつ__getattr__を減らす
-
+```py
     a = df.a.values
     for idx in range(df.shape[0]):
         a[idx] # 0.09秒( 90ms)
-
+```
 
 計算結果を列として追加するならmapメソッド
-
+```py
     def create_house_age_class(age):
             if age < LOWER_SPLIT:
                 return AGE_LABEL_YOUNG
@@ -990,24 +1076,26 @@ valuesでnumpy array型にし、かつ__getattr__を減らす
 
     _data = data.copy()
     _data.loc[:, 'HousingAgeClass'] = _data.HouseAge.map(create_house_age_class)
+```
 
 DASK
-
+```py
     import dask.dataframe as dd
     reader = dd.read_csv('sample.csv', encoding='utf-8', header=None)
     print(reader.compute())
+```
 
 # DataFrameのインデックス同士の比較
-
+```py
     train[train.index.isin(train_mag[train_mag.isnull().any(axis=1)].index)].reset_index().sum(axis=1)
-
+```
 
 
 reset_index()のエラー
 TypeError: cannot insert an item into a CategoricalIndex that is not already an existing category
 grouped.columns.astype('str')で型を変えるとOK
 [pandas-dev/pandas#19136](https://github.com/pandas-dev/pandas/issues/19136)
-
+```py
     dfs=pd.DataFrame({'Year': np.random.randint(2000,2017,10000),
     'Month': np.random.randint(1,12,10000),
     'Data': np.random.randint(0,100,10000)})
@@ -1019,11 +1107,14 @@ grouped.columns.astype('str')で型を変えるとOK
     # # This works:
     grouped.columns=grouped.columns.astype('str')
     grouped.reset_index()
+```
+
 
 # DataFrameの列全ての文字列を結合する
 # astype(str) は、数値と文字列が混じっているとcatできないため統一させている
+```py
 df[['CATEGORY_PATH3', 'SITE_PROFILE']].astype(str).apply(lambda r: r.str.cat(sep='_'), axis=1)
-
+```
 
 
 # メモリ
@@ -1032,31 +1123,31 @@ pandasのメモリの見方について
 [PandasのDataFrameのメモリ使用量を見る | mwSoft](http://www.mwsoft.jp/programming/numpy/dataframe_memory.html)
 
 最終的にはこれで見れる
-
+```py
     df.info(memory_usage='deep')
-
+```
 こちらは上と同じだがサイズのみ返す
-
+```py
     df.memory_usage(deep=True).sum() / 1024**2
     sys.getsizeofの返す値も上と同じ
-
+```
 ※間違っているかも ← あっている（下のように'df'と指定すると文字列として使用メモリを返すのでdfを渡す必要がある）
-
+```py
     sys.getsizeof('df')/1024**2
-
+```
 csr_matrixのメモリ確認用
-
+```py
     def get_size_of_csr(csr):
     return csr.data.nbytes + csr.indices.nbytes + csr.indptr.nbytes
     get_size_of_csr(df_final_sparse) / 1024**2
-
+```
 
 変数の確認
-
+```py
     %whos
 
 ベスト５
-
+```py
     import sys
     import pandas as pd
     from scipy.sparse import csr_matrix
@@ -1078,12 +1169,13 @@ csr_matrixのメモリ確認用
 
 
 ## メモリ削減
+```py
     import gc
     del df
     gc.collect()
 
 参考：[https://qiita.com/nannoki/items/1466779987b68c4f4bf9](https://qiita.com/nannoki/items/1466779987b68c4f4bf9)
-
+```py
     from itertools import chain
     import sys
     from collections import deque
@@ -1121,7 +1213,7 @@ csr_matrixのメモリ確認用
     show_objects_size(100)
 
 メモリ削減
-
+```py
     def reduce_mem_usage(df):
         """ iterate through all the columns of a dataframe and modify the data type
             to reduce memory usage.
@@ -1161,8 +1253,9 @@ csr_matrixのメモリ確認用
 
 
 
-# **特徴量エンジニアリング**
-## **日付・時間を処理**
+# 特徴量エンジニアリング
+## 日付・時間を処理
+```py
     train['datetime'] = pd.to_datetime(train['datetime']) # dtype を datetime64 に変換
     train['year'] = train['datetime'].dt.year
     train['month'] = train['datetime'].dt.month
@@ -1171,32 +1264,39 @@ csr_matrixのメモリ確認用
     train['hour'] = train['datetime'].dt.hour
     train['minute'] = train['datetime'].dt.minute
     train['second'] = train['datetime'].dt.second
-## **特定の文字を含んだカラム名のリストを得る**
+## 特定の文字を含んだカラム名のリストを得る
+```py
     # 'target' という文字を含んだカラムを取得
     cols = [c for c in train.columns if 'target' in str(c)]
-## **json 形式のカラムを複数のカラムに展開する**
+## json 形式のカラムを複数のカラムに展開する
+```py
     df_json = json_normalize(train['json_col'].apply(lambda x: json.loads(x)))
-## **複数の情報を含んだカラムを分割する**
+## 複数の情報を含んだカラムを分割する
 
 Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含んだカラムを分割する。
-
+```py
     # アンダーバーで分割
     train['OS'] = train['OS_VERSION'].str.split('_', expand=True)[0]
     train['VERSION'] = train['OS_VERSION'].str.split('_', expand=True)[1]
-## **Count Encoding**
+## Count Encoding
 
 カテゴリ変数の列で各カテゴリの出現回数をカウント。ここでは、train と test における出現回数を合計した特徴量を生成。カテゴリ値の人気度を測定しているようなものと解釈する。
 参考：[https://blog.datarobot.com/jp/automatedfeatureengineering](https://blog.datarobot.com/jp/automatedfeatureengineering)
-
+```py
     train['col_name_count'] = train['col_name'].map(pd.concat([train['col_name'], test['col_name']], ignore_index=True).value_counts(dropna=False))
     test['col_name_count'] = test['col_name'].map(pd.concat([train['col_name'], test['col_name']], ignore_index=True).value_counts(dropna=False))
-## **clipping**
+## clipping
+```py
     # 99%
     upperbound, lowerbound = np.percentile(train['col_name'], [1, 99])
     train['col_name_clipped'] = np.clip(train['col_name'], upperbound, lowerbound)
-## **normalize**
+
+## normalize
+```py
     train['col_name_nomalize'] = (train['col_name'] - train['col_name'].mean() ) / train['col_name'].std()
-## **カテゴリ変数のみ Label Eoncoding する**
+
+## カテゴリ変数のみ Label Eoncoding する
+```py
     from sklearn.preprocessing import LabelEncoder
 
     for col in train.columns:
@@ -1205,22 +1305,32 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
             le.fit(list(train[col].astype(str).values) + list(test[col].astype(str).values))
             train[col] = le.transform(list(train[col].astype(str).values))
             test[col] = le.transform(list(test[col].astype(str).values))
-## **行のNAN数を新しい特徴量に**
+## 行のNAN数を新しい特徴量に
+```py
     train['number_of_NAN'] = train.isna().sum(axis=1).astype(np.int8)
-## **ビニング処理**
+
+## ビニング処理
 
 ビンに含まれる個数を指定
-
+```py
     df['col_name_qcut_10'] = pd.qcut(df['col_name'], 10)
-## **test データに無い場合１、ある場合は０にする特徴量**
+
+## test データに無い場合１、ある場合は０にする特徴量
+```py
     train['col_name_check'] = np.where(train['col_name'].isin(test['col_name']), 1, 0)
     # test の場合は逆
     test['col_name_check']  = np.where(test['col_name'].isin(train['col_name']), 1, 0)
-## **全て０のカラムを作成する**
+
+## 全て０のカラムを作成する
+```py
     train["col_name_zero"] = np.zeros(train.shape[0])
-## **NaN とそれ以外の値の特徴量を作成する**
+
+## NaN とそれ以外の値の特徴量を作成する
+```py
     train['col_name_nan'] = np.where(train['col_name'].isna(), 1, 0)
-## **nan 数の同じカラムごとにグループ化**
+
+## nan 数の同じカラムごとにグループ化
+```py
     nans_groups = {}
     nans = pd.concat([train, test]).isna()
 
@@ -1234,10 +1344,10 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
 
     for n_group, n_members in nans_groups.items():
         print(n_group, len(n_members), n_members)
-## **Aggregated Features**
+## Aggregated Features
 
 カテゴリのグループごとに aggregation する。例えば、同じip, os, deviceの総クリック数を計算するなど。参考：[Kaggle Masterに学ぶ実践的機械学習[Kaggle TalkingData Competition編]](https://qiita.com/keitakurita/items/f10e658843930b888814#aggregated-features)
-
+```py
     agg_types = ['max', 'min', 'sum', 'mean', 'std', 'count']
     for agg_type in agg_types:
         new_col_name = cat_col + '_' + agg_col + '_' + agg_type
@@ -1247,21 +1357,26 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
         temp = temp[new_col_name].to_dict()
         train[new_col_name] = train[cat_col].map(temp)
         test[new_col_name]  = test[cat_col].map(temp)
-## **numeric feature を 0以上にシフトする**
+
+## numeric feature を 0以上にシフトする
+```py
     for col in train.columns:
         if not ((np.str(train[col].dtype)=='category')|(train[col].dtype=='object')):
             min = np.min((train[col].min(), test[col].min()))
             train[col] -= np.float32(min)
             test[col] -= np.float32(min)
-## **numeric feature の 欠損値を -1 で埋める**
+
+## numeric feature の 欠損値を -1 で埋める
+```py
     for col in train.columns:
         if not ((np.str(train[col].dtype)=='category')|(train[col].dtype=='object')):
             train[col].fillna(-1, inplace=True)
             test[col].fillna(-1, inplace=True)
-## **frequency encoding**
+
+## frequency encoding
 
 カテゴリ変数の出現回数で変数を置き換える。
-
+```py
     def freq_enc(train, test, cols):
         for col in cols:
             df = pd.concat([train[col], test[col]])
@@ -1274,7 +1389,9 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
             test[new_col] = test[new_col].astype('float32')
 
     freq_enc(train, test, feature_list)
-## **特徴量同士を結合した特徴量を作成し Label Encoding**
+
+## 特徴量同士を結合した特徴量を作成し Label Encoding
+```py
     def conb_enc(col1, col2, train, test):
         nm = col1 + '_' + col2
         train[new_col] = train[col1].astype(str) + '_' + train[col2].astype(str)
@@ -1283,25 +1400,28 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
         le.fit(list(train[new_col].astype(str).values) + list(test[new_col].astype(str).values))
         train[new_col] = le.transform(list(train[new_col].astype(str).values))
         test[new_col] = le.transform(list(test[new_col].astype(str).values))
-## **あるカラム群の欠損の数の合計を特徴量にする**
+
+## あるカラム群の欠損の数の合計を特徴量にする
+```py
     train['missing'] = train[col_list].isna().sum(axis=1).astype('int16')
     test['missing'] = test[col_list].isna().sum(axis=1).astype('int16')
 
 
-# **特徴選択**
-## **constant なカラムを抜き出す**
+# 特徴選択
+## constant なカラムを抜き出す
 
 90%以上、同じ値のカラムを抜き出す
-
+```py
     def get_constant_cols(df):
         constant_cols = [col for col in df.columns if df[col].value_counts(dropna=False, normalize=True).values[0] > 0.9]
         return constant_cols
 
     cols = get_constant_cols(train)
-## **不要なカラムを落とす**
+## 不要なカラムを落とす
 - 値が一つしかないカラム
 - null が多いカラム
 - ほとんど同じ値のカラム
+```py
     one_value_cols = [col for col in train.columns if train[col].nunique() <= 1]
     one_value_cols_test = [col for col in test.columns if test[col].nunique() <= 1]
 
@@ -1315,7 +1435,7 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
 
     train.drop(cols_to_drop, axis=1, inplace=True)
     test.drop(cols_to_drop, axis=1, inplace=True)
-## **再帰的特徴量選択**
+## 再帰的特徴量選択
 
 まったく特徴量を使わないところから、ある基準が満たされるまで1つずつ重要度が高い特徴量を加えていく、もしくは、すべての特徴量を使う状態から1つずつ特徴量を取り除いていくという操作を繰り返すことで特徴量を選択する。
 RFE(Recursive Feature Elimination; 再帰的特徴量削減)は、すべての特徴量から開始してモデルを作り、そのモデルで最も重要度が低い特徴量を削除する。そしてまたモデルを作り、最も重要度が低い特徴量を削除する。この過程を事前に定めた数の特徴量になるまで繰り返す、という手法である。
@@ -1325,7 +1445,7 @@ RFE(Recursive Feature Elimination; 再帰的特徴量削減)は、すべての�
 ----------
 
 [sklearn.feature_selection.RFE — scikit-learn 0.22.1 documentation](https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.RFE.html)
-
+```py
     from sklearn.feature_selection import RFE
     from sklearn.ensemble import RandomForestClassifier
 
@@ -1337,7 +1457,9 @@ RFE(Recursive Feature Elimination; 再帰的特徴量削減)は、すべての�
 
     X_train_rfe = select.transform(X_train)
     X_test_rfe = select.transform(test)
-## **コルモゴロフ-スミルノフ検定を利用した特徴量選択**
+
+## コルモゴロフ-スミルノフ検定を利用した特徴量選択
+```py
     from scipy.stats import ks_2samp
     list_p_value =[]
 
@@ -1349,10 +1471,10 @@ RFE(Recursive Feature Elimination; 再帰的特徴量削減)は、すべての�
 
 参考：[https://www.kaggle.com/c/elo-merchant-category-recommendation/discussion/77537](https://www.kaggle.com/c/elo-merchant-category-recommendation/discussion/77537)
 
-## **Null Importance による特徴量選択**
+## Null Importance による特徴量選択
 
 LightGBM などの学習器における feature importance で、上位に来た特徴量の中にノイズになっているものが含まれていることがある。そこで正しい目的変数で学習した結果の feature importance と目的変数を shuffle したデータを用いて学習した結果の feature importance を比較することでノイズになっている特徴量を抽出する。
-
+```py
     def get_feature_importances(X, shuffle, seed=None):
         cols_to_drop = ['col_to_drop_1','col_to_drop_2']
         categoricals = ['cat_col']
@@ -1425,7 +1547,7 @@ LightGBM などの学習器における feature importance で、上位に来た
         if percentage < THRESHOLD:
             not_important_features.append(feature)
 
-**参考**
+参考
 
 - [Feature Selection with Null Importances](https://www.kaggle.com/ogrellier/feature-selection-with-null-importances/comments)
 - [Null Importanceを用いた特徴量選定](https://qiita.com/KenkenGoda/items/1d6ede5d492d1a9dc3c9)
