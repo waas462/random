@@ -1145,6 +1145,7 @@ csr_matrixのメモリ確認用
 変数の確認
 ```py
     %whos
+```
 
 ベスト５
 ```py
@@ -1166,13 +1167,14 @@ csr_matrixのメモリ確認用
             memory_df = memory_df.append(pd.DataFrame([[var_name, d_type, mem]], columns=columns))
         display(memory_df.sort_values('Memory(MB)', ascending=False).head(top_n))
     get_memory_use(dir(), top_n=5)
-
+```
 
 ## メモリ削減
 ```py
     import gc
     del df
     gc.collect()
+```
 
 参考：[https://qiita.com/nannoki/items/1466779987b68c4f4bf9](https://qiita.com/nannoki/items/1466779987b68c4f4bf9)
 ```py
@@ -1211,6 +1213,7 @@ csr_matrixのメモリ確認用
                 print('{:<15}{:.3f} {}'.format(object_name, size, disp_unit[unit]))
     # 100MB超のオブジェクト一覧を表示する
     show_objects_size(100)
+```
 
 メモリ削減
 ```py
@@ -1247,6 +1250,7 @@ csr_matrixのメモリ確認用
         print('Memory usage after optimization is: {:.2f} MB'.format(end_mem))
         print('Decreased by {:.1f}%'.format(100 * (start_mem - end_mem) / start_mem))
         return df
+```
 
 [関数 – 少し高度な関数の使い方【Python入門22】 | Pythonと機械学習の入門サイト](https://ruby-de-free.net/wp/functions-using-somewhat-advanced-functions/)
 
@@ -1264,13 +1268,19 @@ csr_matrixのメモリ確認用
     train['hour'] = train['datetime'].dt.hour
     train['minute'] = train['datetime'].dt.minute
     train['second'] = train['datetime'].dt.second
+```
+
 ## 特定の文字を含んだカラム名のリストを得る
 ```py
     # 'target' という文字を含んだカラムを取得
     cols = [c for c in train.columns if 'target' in str(c)]
+```
+
 ## json 形式のカラムを複数のカラムに展開する
 ```py
     df_json = json_normalize(train['json_col'].apply(lambda x: json.loads(x)))
+```
+
 ## 複数の情報を含んだカラムを分割する
 
 Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含んだカラムを分割する。
@@ -1278,6 +1288,8 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
     # アンダーバーで分割
     train['OS'] = train['OS_VERSION'].str.split('_', expand=True)[0]
     train['VERSION'] = train['OS_VERSION'].str.split('_', expand=True)[1]
+```
+
 ## Count Encoding
 
 カテゴリ変数の列で各カテゴリの出現回数をカウント。ここでは、train と test における出現回数を合計した特徴量を生成。カテゴリ値の人気度を測定しているようなものと解釈する。
@@ -1285,15 +1297,19 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
 ```py
     train['col_name_count'] = train['col_name'].map(pd.concat([train['col_name'], test['col_name']], ignore_index=True).value_counts(dropna=False))
     test['col_name_count'] = test['col_name'].map(pd.concat([train['col_name'], test['col_name']], ignore_index=True).value_counts(dropna=False))
+```
+
 ## clipping
 ```py
     # 99%
     upperbound, lowerbound = np.percentile(train['col_name'], [1, 99])
     train['col_name_clipped'] = np.clip(train['col_name'], upperbound, lowerbound)
+```
 
 ## normalize
 ```py
     train['col_name_nomalize'] = (train['col_name'] - train['col_name'].mean() ) / train['col_name'].std()
+```
 
 ## カテゴリ変数のみ Label Eoncoding する
 ```py
@@ -1305,29 +1321,36 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
             le.fit(list(train[col].astype(str).values) + list(test[col].astype(str).values))
             train[col] = le.transform(list(train[col].astype(str).values))
             test[col] = le.transform(list(test[col].astype(str).values))
+```
+
 ## 行のNAN数を新しい特徴量に
 ```py
     train['number_of_NAN'] = train.isna().sum(axis=1).astype(np.int8)
+```
 
 ## ビニング処理
 
 ビンに含まれる個数を指定
 ```py
     df['col_name_qcut_10'] = pd.qcut(df['col_name'], 10)
+```
 
 ## test データに無い場合１、ある場合は０にする特徴量
 ```py
     train['col_name_check'] = np.where(train['col_name'].isin(test['col_name']), 1, 0)
     # test の場合は逆
     test['col_name_check']  = np.where(test['col_name'].isin(train['col_name']), 1, 0)
+```
 
 ## 全て０のカラムを作成する
 ```py
     train["col_name_zero"] = np.zeros(train.shape[0])
+```
 
 ## NaN とそれ以外の値の特徴量を作成する
 ```py
     train['col_name_nan'] = np.where(train['col_name'].isna(), 1, 0)
+```
 
 ## nan 数の同じカラムごとにグループ化
 ```py
@@ -1344,6 +1367,8 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
 
     for n_group, n_members in nans_groups.items():
         print(n_group, len(n_members), n_members)
+```
+
 ## Aggregated Features
 
 カテゴリのグループごとに aggregation する。例えば、同じip, os, deviceの総クリック数を計算するなど。参考：[Kaggle Masterに学ぶ実践的機械学習[Kaggle TalkingData Competition編]](https://qiita.com/keitakurita/items/f10e658843930b888814#aggregated-features)
@@ -1357,6 +1382,7 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
         temp = temp[new_col_name].to_dict()
         train[new_col_name] = train[cat_col].map(temp)
         test[new_col_name]  = test[cat_col].map(temp)
+```
 
 ## numeric feature を 0以上にシフトする
 ```py
@@ -1365,6 +1391,7 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
             min = np.min((train[col].min(), test[col].min()))
             train[col] -= np.float32(min)
             test[col] -= np.float32(min)
+```
 
 ## numeric feature の 欠損値を -1 で埋める
 ```py
@@ -1372,6 +1399,7 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
         if not ((np.str(train[col].dtype)=='category')|(train[col].dtype=='object')):
             train[col].fillna(-1, inplace=True)
             test[col].fillna(-1, inplace=True)
+```
 
 ## frequency encoding
 
@@ -1389,7 +1417,7 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
             test[new_col] = test[new_col].astype('float32')
 
     freq_enc(train, test, feature_list)
-
+```
 ## 特徴量同士を結合した特徴量を作成し Label Encoding
 ```py
     def conb_enc(col1, col2, train, test):
@@ -1405,7 +1433,7 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
 ```py
     train['missing'] = train[col_list].isna().sum(axis=1).astype('int16')
     test['missing'] = test[col_list].isna().sum(axis=1).astype('int16')
-
+```
 
 # 特徴選択
 ## constant なカラムを抜き出す
@@ -1417,6 +1445,9 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
         return constant_cols
 
     cols = get_constant_cols(train)
+```
+
+
 ## 不要なカラムを落とす
 - 値が一つしかないカラム
 - null が多いカラム
@@ -1435,6 +1466,9 @@ Android 6.0.1、iOS 11.4.0 といった OSとバージョン情報を複数含�
 
     train.drop(cols_to_drop, axis=1, inplace=True)
     test.drop(cols_to_drop, axis=1, inplace=True)
+```
+
+
 ## 再帰的特徴量選択
 
 まったく特徴量を使わないところから、ある基準が満たされるまで1つずつ重要度が高い特徴量を加えていく、もしくは、すべての特徴量を使う状態から1つずつ特徴量を取り除いていくという操作を繰り返すことで特徴量を選択する。
@@ -1442,7 +1476,6 @@ RFE(Recursive Feature Elimination; 再帰的特徴量削減)は、すべての�
 引数には estimator、および特徴量の数 n_features_to_select（残す特徴量数） を指定する。
 (特徴量数 - n_features_to_select) 回、モデル作成=>特徴量削除 が行われるので処理時間がかかる。
 
-----------
 
 [sklearn.feature_selection.RFE — scikit-learn 0.22.1 documentation](https://scikit-learn.org/stable/modules/generated/sklearn.feature_selection.RFE.html)
 ```py
@@ -1457,6 +1490,7 @@ RFE(Recursive Feature Elimination; 再帰的特徴量削減)は、すべての�
 
     X_train_rfe = select.transform(X_train)
     X_test_rfe = select.transform(test)
+```
 
 ## コルモゴロフ-スミルノフ検定を利用した特徴量選択
 ```py
@@ -1468,6 +1502,7 @@ RFE(Recursive Feature Elimination; 再帰的特徴量削減)は、すべての�
 
     Se = pd.Series(list_p_value, index=train.columns).sort_values()
     list_discarded = list(Se[Se < .1].index)
+```
 
 参考：[https://www.kaggle.com/c/elo-merchant-category-recommendation/discussion/77537](https://www.kaggle.com/c/elo-merchant-category-recommendation/discussion/77537)
 
@@ -1546,6 +1581,7 @@ LightGBM などの学習器における feature importance で、上位に来た
         percentage = (null_value < actual_value).sum() / null_value.size * 100
         if percentage < THRESHOLD:
             not_important_features.append(feature)
+```
 
 参考
 
