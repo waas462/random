@@ -77,7 +77,6 @@ plt.style.use('seaborn-white')
 plt.style.use('seaborn-whitegrid')
 ```
 https://qiita.com/eriksoon/items/b93030ba4dc686ecfbba#%E7%B5%84%E3%81%BF%E5%90%88%E3%82%8F%E3%81%9B%E3%81%A6%E4%BD%BF%E3%81%86%E3%81%93%E3%81%A8%E3%82%82
-```
 https://qiita.com/eriksoon/items/b93030ba4dc686ecfbba#%E7%B5%84%E3%81%BF%E5%90%88%E3%82%8F%E3%81%9B%E3%81%A6%E4%BD%BF%E3%81%86%E3%81%93%E3%81%A8%E3%82%82
 
 
@@ -88,4 +87,33 @@ https://qiita.com/eriksoon/items/b93030ba4dc686ecfbba#%E7%B5%84%E3%81%BF%E5%90%8
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 df.plot(ax=ax)
+```
+
+## ベン図
+```py
+
+import matplotlib.pyplot as plt
+from matplotlib_venn import venn2
+
+def plot_venn_dataframes(df1:pd.DataFrame, df2:pd.DataFrame, columns:list, set_labels:tuple):
+    """
+    df1, df2 のベン図をplot
+    - columns: df1, df2共通 columnを指定
+    - set_labels: df1とdf2の説明
+    """
+    ncols = 6
+    nrows = (len(columns) // ncols)
+    fig, axes = plt.subplots(figsize=(3 * ncols, 3 * nrows), ncols=ncols, nrows=nrows)
+    axes = np.ravel(axes)
+    for c, ax in zip(columns, axes):
+        venn2(subsets=(set(df1[ｃ]), set(df2[ｃ])), set_labels=set_labels, ax=ax)
+        ax.set_title(c)
+    fig.tight_layout()
+
+plot_venn_dataframes(
+    dataset.meta.query('date < "2020-08-01"'),
+    dataset.meta.query('date >= "2020-08-01"'),
+    list(set(dataset.meta.columns) & set(dataset.meta.columns)),
+    set_labels=('Train', 'Test')
+    )
 ```

@@ -1,5 +1,8 @@
 # pandas
 
+参考：
+[Kaggleで戦いたい人のためのpandas実戦入門 \- ML\_BearのKaggleな日常](https://naotaka1128.hatenadiary.jp/entry/pandas-start-guide)
+
 # DataFrame作成&変換
 ## read csv
 ```py
@@ -250,6 +253,13 @@ sort=Falseにしないと、カラム順が昇順に並び替えられてしま�
 
 pd.concat([df_1, df_2], sort=False)
 
+# 300倍早い
+pd.concat([
+    df_test.reset_index(drop=True),
+    df_user.reindex(df_test['user_id'].values) \
+            .reset_index(drop=True)], axis=1)
+
+[FAST PANDAS LEFT JOIN \(357x faster than pd\.merge\) \| Kaggle](https://www.kaggle.com/tkm2261/fast-pandas-left-join-357x-faster-than-pd-merge)
 ```
 
 # 辞書をマージする (キー重複した場合は、Value をリスト化)
@@ -450,8 +460,17 @@ print(df.unstack()
 
 ## groupby
 
-Python pandas データ選択処理をちょっと詳しく <中編> - StatsFragments
-まとめたい
+### 特定カラムの統計量を複数
+agg_df = inputlog.groupby(['session_id']).agg({'spend_time': ['max', 'mean', 'sum', 'std', 'nunique', np.ptp, np.median]})
+agg_df.columns = ['_'.join(col) for col in agg_df.columns.values]
+
+### 複数カラムを一度に集計
+```py
+df_itr.groupby(['SITE_ID', 'SITE_NAME', 'PERIOD']) \
+    .agg(category_count=('CATEGORY_ID', 'count'),    # category_count はカラム名
+        exitst_sum=('EXISTING_PROFILES', 'sum'),
+        newly_sum=('NEWLY_TAGGED_PROFILES', 'sum'))
+```
 
 単純に全カラム
 ```py
@@ -483,13 +502,10 @@ key単位の件数取得
 train.groupby(['event_id', 'event_code'])['event_id'].count()
 df_itr.groupby(['CATEGORY_ID', 'SITE_ID']).size()
 ```
-複数カラムを一度に集計
-```py
-df_itr.groupby(['SITE_ID', 'SITE_NAME', 'PERIOD']) \
-    .agg(category_count=('CATEGORY_ID', 'count'),    # category_count はカラム名
-        exitst_sum=('EXISTING_PROFILES', 'sum'),
-        newly_sum=('NEWLY_TAGGED_PROFILES', 'sum'))
-```
+
+
+
+
 
 統計量作成後、リネーム
 ```py

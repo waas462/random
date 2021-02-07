@@ -1,9 +1,5 @@
 # EDA
 
-スプレッドシートで手軽にデータを見れるようにしておくと便利
-pandas_profileをとりあえず出しておくと便利
-
-    この変数のmissing valueの割合は？とか
 
 参考
 [【随時更新】Kaggleテーブルデータコンペできっと役立つTipsまとめ - ML_BearのKaggleな日常](https://naotaka1128.hatenadiary.jp/entry/kaggle-compe-tips)
@@ -41,6 +37,48 @@ Validation
 Ensemble / Stacking
 
 
+
+スプレッドシートで手軽にデータを見れるようにしておくと便利
+pandas_profileをとりあえず出しておくと便利
+
+    この変数のmissing valueの割合は？とか
+
+
+テーブルデータの場合
+
+- 各データのpandas_profileをhtml出力
+    - 日付は日付型に変換しておくastype
+    - submit sample
+        - 粒度の確認（この粒度でtrain, testを作る）
+    - test
+        - train と一致しているか
+            - ベン図
+    - 前処理後、確認の意味も込めてpandas_profileを別名で出力
+    - 欠損値
+
+    - ターゲットの分布
+
+```py
+!pip install dtale
+
+import dtale
+import dtale.app as dtale_app
+dtale_app.USE_COLAB = True
+
+dtale.show(train_input_log,  ignore_duplicate=True)
+```
+
+```py
+!pip install sweetviz
+
+import sweetviz
+
+# my_report = sweetviz.analyze(train_input_log)
+my_report = sweetviz.compare([train_input_log, "Train"], [test_input_log, "Test"])
+
+my_report.show_html("Report.html")
+```
+
 ## **EDA(Explanatory Data Analysis)**
 
 **全般**
@@ -61,7 +99,7 @@ Ensemble / Stacking
 - まずは機械的に一連のチェックをするのが良さそう
     - 各カラムの欠損値確認
     - 外れ値（相関係数に影響する）
-- 
+-
 - EDAのとっかかりがなかったらXGBoostやLightGBMのfeature_importanceをまず見るのでも良い(2)
 - targetに影響する特徴量を想像してtodo化しておこう
 - 間違ってる列は消すんじゃなくて、間違ってるデータ列だとアルゴリズムに教えよう。(あなたよりアルゴリズムのほうが賢いこともよくあるよ)
@@ -94,20 +132,20 @@ Ensemble / Stacking
 
     # 最新バージョン
     !pip install pandas-profiling==2.8.0
-    
+
     # matplotlib日本語化
     !pip install japanize-matplotlib
     import japanize_matplotlib
     import pandas as pd
     import pandas_profiling as pdp
     from IPython.display import HTML
-    
+
     # 全サンプル使う必要はない
     profile = pdp.ProfileReport(df)
     profile.to_file("ProfileReport_cci_9client.html")
     HTML(filename='ProfileReport_cci_9client.html')
-    
-    
+
+
 
 pd.scatter_matrix(df)
 
@@ -422,7 +460,7 @@ np.sqrt(x+2/3)
 - Adversarial Validation
     - CVとLBが一致しない場合trainとtestの分布が異なる恐れ
     - Testに近いTrainデータでValidationを行うのもあり
-- LBを信じるべきか否か(8) 
+- LBを信じるべきか否か(8)
 ![](https://paper-attachments.dropbox.com/s_7E5490DED9B39C79CF7A296216B52BB82937D84344914574D87C4906555788A4_1602226209328_45f11db0-ae4c-4554-acaa-c3cd45dd8d63.png)
 
 
@@ -486,12 +524,12 @@ np.sqrt(x+2/3)
         - step * alpha
         - eta / alpha
     - boosting_type: dropoutを模したdartっていうのも有効
-    - Owen流(8) 
+    - Owen流(8)
 ![](https://paper-attachments.dropbox.com/s_7E5490DED9B39C79CF7A296216B52BB82937D84344914574D87C4906555788A4_1602226243858_b64cf64b-b159-4fbc-bb10-a7316f4582b6.png)
 
-    - 
-    - 
-    - 
+    -
+    -
+    -
     - [CPMP流 (Kaggle Days Paris)](https://www.youtube.com/watch?v=fH_FiquKhiI&feature=youtu.be)
         - subsample=0.7 & 他はデフォから始めろ
         - min_child_weight: train/val gap 大きければ増やせ
@@ -538,8 +576,8 @@ np.sqrt(x+2/3)
 - [pandas.DataFrame のforループをゆるふわ△改良して300倍高速化する](https://kunai-lab.hatenablog.jp/entry/2018/04/08/134924)
 
 [決定木は本当に変換に依存しないのか？ - 天色グラフィティ](https://amalog.hateblo.jp/entry/decision-tree-scaling)
-決定木をベースとした手法はStandardScalerなどの線形な変換に対しては依存しないことが分かりました。 
-RandomForestでは、分割境界が特徴量の中点に設定されることから、log1pなどの非線形変換については結果が微妙に変わることがあるようです。 
+決定木をベースとした手法はStandardScalerなどの線形な変換に対しては依存しないことが分かりました。
+RandomForestでは、分割境界が特徴量の中点に設定されることから、log1pなどの非線形変換については結果が微妙に変わることがあるようです。
 LightGBMでは内部でbinningが行われている関係上、RandomForest以上に変換に対して頑健になることが分かりました。
 
 [log1p変換？ どうして？ | カグル](https://www.kaggle.com/c/favorita-grocery-sales-forecasting/discussion/47124)
@@ -555,4 +593,3 @@ log1pを使用して販売台数を変換すると、評価メトリックは重
      私は両方を最大限に活用するために、aが1よりも大幅に大きいlog（1 + ax）のようなものを使用していました。
      これがWebトラフィック予測のコンテストで使用したもので、log1pよりもはるかに優れた結果をもたらしました。
      しかし、とにかくlog1pを使用して評価メトリックを一致させる必要があります…
-
