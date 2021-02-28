@@ -21,7 +21,7 @@ kaggle_api_key = results.get('files', [])
 filename = "/root/.kaggle/kaggle.json"
 os.makedirs(os.path.dirname(filename), exist_ok=True)
 
-request = drive_service.files().get_media(fileId=kaggle_api_key\[0\]['id'])
+request = drive_service.files().get_media(fileId=kaggle_api_key[0]['id'])
 fh = io.FileIO(filename, 'wb')
 downloader = MediaIoBaseDownload(fh, request)
 done = False
@@ -30,39 +30,27 @@ while done is False:
     print("Download %d%%." % int(status.progress() * 100))
 os.chmod(filename, 600)
 
-# dowonload
-ref = 'kashnitsky/mlcourse'
-dataset_download_dir = '/kaggle/input/'# + ref
-os.makedirs(dataset_download_dir, exist_ok=True)
-# コンペ
-# !kaggle competitions download -c $ref -p $dataset_download_dir --unzip
-# データセット
-!kaggle datasets download $ref -p $dataset_download_dir --unzip
-# !unzip -d $dataset_download_dir $dataset_download_dir'/*.zip'
-# current dir
+# competitions list
+import pandas as pd
+!kaggle competitions list -v > kaggle_competitions.csv
+pd.read_csv('kaggle_competitions.csv')
 
-# --unzipオプションがあるので不要か
+# dowonload
+ref = 'indoor-location-navigation'
+dataset_download_dir = '/kaggle/input/' + ref
+os.makedirs(dataset_download_dir, exist_ok=True)
+# !kaggle competitions download -c $ref -p $dataset_download_dir
 # !unzip -d $dataset_download_dir $dataset_download_dir'/*.zip'
+!kaggle datasets download $ref -p $dataset_download_dir --unzip
 
 # current dir
 os.chdir(dataset_download_dir)
 ```
 
-download時のrefを探す
+# dataset ディレクトリ構造を保ちダウンロード
+https://www.kaggle.com/product-feedback/155680
 
-dataset 検索
-```py
-!kaggle datasets list -s 'mlcourse'
-```
-
-competitions list
-```py
-!kaggle competitions list
-```
-
-
-
-- CV
+# CV
 - trainとtestに単純に分割したら、testに対してチューニングするためオーバーフィットされる
 - trainをtrainとvalidに分割し、チューニングはvalidで、最終テストをtestで行う
 - さらに、交差検証（CV)はtrain, validの分割位置を変えて、K個のtrain, validのデータセットを作り、それぞれ学習と検証を行う
