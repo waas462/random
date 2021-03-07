@@ -105,6 +105,14 @@ df2.groupby(['week_n', 'early_week', 'early_week_tmp', 'test']).count().index
 df[df['colum name'].str.contains('find word')]
 ```
 
+## 特定の型の列だけを取ってくる
+```py
+new = df.select_dtypes(['object'])
+
+# 特定の型を除くこともできます。
+new = df.select_dtypes(exclude=np.float)
+```
+
 ## query
 
 ※カラムがobject型やstr型の場合、値を""で括る必要あり
@@ -165,6 +173,7 @@ df.duplicated(subset='ユニークID')
 
 # 重複した行を抽出（keep='first' は重複した最初の行がFalse、lastは最後がFalse）
 df[df.duplicated(keep='first')].style
+test[test.duplicated(subset='object_id', keep='first')]
 
 # 重複削除後のDFを表示
 #  df[~df.duplicated()] と同じ
@@ -172,6 +181,13 @@ df.drop_duplicates().style
 
 # 重複した行カウント
 df.duplicated().sum()
+
+# 特定のカラムが重複しているレコードを全て抽出
+def duplicated_records(df, subset):
+    duplicateds = df[df.duplicated(subset=subset, keep='first')][subset].values
+    display(df[df[subset].isin(duplicateds)])
+
+duplicated_records(test, 'object_id')
 ```
 
 ## ソート
@@ -403,9 +419,12 @@ df.columns = ['a', 'b', 'c']
 
 pivot
 ```py
+# 2列しかない場合、
+df['count'] = 1
+
 df.pivot_table(index=['industry'],  # pivot後の行
               columns=['platform'], # pivot後の列
-              values='saved_click', # pivotの集計値
+              values='count', # pivotの集計値
               aggfunc='count')      # pivotの集計方法(aggfunc=sum, aggfunc='count')
 
 
@@ -883,6 +902,8 @@ for col, values in train.iteritems():
 
 カテゴリカラムをonehot化する（元のカラムは削除する）
 ```py
+# NaNも一つのカテゴリーとしてダミー変数化したい場合は、引数dummy_na=Trueとする。
+
 df = pd.concat([df, pd.get_dummies(df['category'])], axis=1).drop('category', axis=1)
 
 # 分割後のからｍカラムにprefixを付けたい（接頭語）
@@ -929,68 +950,7 @@ s.rolling(3, min_periods=1).sum()
 dt[["id", lag_col]].groupby("id")[lag_col].transform(lambda x : x.rolling(win).mean())
 ```
 
-## Label Encoding
-```py
-# categoryに変換後、cat.codes
-df = pd.DataFrame(d)
-df['city'] = df['city'].astype('category')
-df.dtypes
 
-df['label_enc'] = df['city'].cat.codes
-```
-
-## Count Encoding
-```py
-# method 1
-count_mean = df.groupby('city').target.count()
-df['count_enc'] = df['city'].map(count_mean)
-
-# method 2
-df['count_enc'] = df.groupby('city')['target'].transform('count')
-```
-
-## LabelCount (Count Rank) Encoding
-
-カテゴリ変数の出現回数が多い順に順位づけ
-```py
-count_rank = df.groupby('city')['target'].count().rank(ascending=False)
-df['count_rank'] = df['city'].map(count_rank)
-```
-
-## Target Encoding
-
-Mean EncodingやLikelihood Encodingとも呼ばれる手法
-目的変数（Target）に対してカテゴリ変数の処理をおこなう
-
-目的変数が２値のみをとるブーリアン型であればカテゴリ毎の確率を、
-目的変数が数値であればカテゴリ毎の平均を取るというもの。
-
-ただし、データセットが学習データとテストデータに分かれている場合、
-テストデータの目的変数は未知であるため、演算は学習データに対しておこない、得られた特徴量をテストデータ内のカテゴリへ適用する。
-この部分に注意しないと、Cross Validation をおこなったときにデータがリークすることになってしまう。
-```py
-# method 1
-target_mean = df.groupby('city').target.mean()
-df['target_enc'] = df['city'].map(target_mean)
-
-# method 2
-df['target_enc'] = df.groupby('city')['target'].transform('mean')
-```
-
-## One hot encoding
-```py
-oh_enc = pd.get_dummies(df['city'], prefix='gender')
-df = pd.concat([df, oh_enc], axis=1)
-```
-
-## Frequency Encoding
-```py
-for col in cat_cols:
-    freq_encoding = train[col].value_counts()
-    # ラベルの出現回数で置換
-    train[col] = train[col].map(freq_encoding)
-    test[col] = test[col].map(freq_encoding)
-```
 
 
 # パフォーマンス
@@ -1306,13 +1266,135 @@ train['OS'] = train['OS_VERSION'].str.split('_', expand=True)[0]
 train['VERSION'] = train['OS_VERSION'].str.split('_', expand=True)[1]
 ```
 
-## Count Encoding
-
-カテゴリ変数の列で各カテゴリの出現回数をカウント。ここでは、train と test における出現回数を合計した特徴量を生成。カテゴリ値の人気度を測定しているようなものと解釈する。
-参考：[https://blog.datarobot.com/jp/automatedfeatureengineering](https://blog.datarobot.com/jp/automatedfeatureengineering)
+## Label Encoding
 ```py
+# categoryに変換後、cat.codes
+df = pd.DataFrame(d)
+df['city'] = df['city'].astype('category')
+df.dtypes
+
+# method 1
+df['label_enc'] = df['city'].cat.codes
+
+# method 2
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+df['label_enc'] = le.fit_transform(df['city'])
+
+```
+
+### 指定カラムのLabel Encoding
+```py
+category_columns = ['principal_maker', 'principal_or_first_maker', 'copyright_holder', 'acquisition_method', ]
+
+def label_encoding(df, columns:list):
+    """
+    NaN は -1 にencodedingされる
+    """
+    for column in columns:
+        df[column] = df[column].astype('category')
+        df['le_' + column] = df[column].cat.codes
+
+label_encoding(df, category_columns)
+```
+
+### カテゴリ変数のみ Label Encoding する
+```py
+from sklearn.preprocessing import LabelEncoder
+
+for col in train.columns:
+    if train[col].dtype == 'object':
+        le = LabelEncoder()
+        le.fit(list(train[col].astype(str).values) + list(test[col].astype(str).values))
+        train[col] = le.transform(list(train[col].astype(str).values))
+        test[col] = le.transform(list(test[col].astype(str).values))
+```
+
+### 特徴量同士を結合した特徴量を作成し Label Encoding
+```py
+def conb_enc(col1, col2, train, test):
+    nm = col1 + '_' + col2
+    train[new_col] = train[col1].astype(str) + '_' + train[col2].astype(str)
+    test[new_col] = test[col1].astype(str) + '_' + test[col2].astype(str)
+    le = LabelEncoder()
+    le.fit(list(train[new_col].astype(str).values) + list(test[new_col].astype(str).values))
+    train[new_col] = le.transform(list(train[new_col].astype(str).values))
+    test[new_col] = le.transform(list(test[new_col].astype(str).values))
+```
+
+## Count Encoding
+```py
+# mapする方法
+#  dropna=False でnullも考慮
+map_copyright_holder_counts = train['copyright_holder'].value_counts(dropna=False)
+train['copyright_holder_counts'] = train['copyright_holder'].map(map_copyright_holder_counts)
+
+# mapする方法2
+count_mean = df.groupby('city', dropna=False).target.count()
+df['count_enc'] = df['city'].map(count_mean)
+
+# method 2 (行数は変わらず集計)
+df['count_enc'] = df.groupby('city')['target'].transform('count')
+
+# - カテゴリ変数の列で各カテゴリの出現回数をカウント。
+# - ここでは、train と test における出現回数を合計した特徴量を生成。カテゴリ値の人気度を測定しているようなものと解釈する。
+# - 参考：[https://blog.datarobot.com/jp/automatedfeatureengineering](https://blog.datarobot.com/jp/automatedfeatureengineering)
 train['col_name_count'] = train['col_name'].map(pd.concat([train['col_name'], test['col_name']], ignore_index=True).value_counts(dropna=False))
 test['col_name_count'] = test['col_name'].map(pd.concat([train['col_name'], test['col_name']], ignore_index=True).value_counts(dropna=False))
+```
+
+### 特定カラムを count encoding
+```py
+def count_encoding(df, columns:list):
+    """
+    NaN は NaN文字列として集計
+    """
+    for column in columns:
+        map = df[column].value_counts(dropna=False)
+        df['ce_' + column] = df[column].map(map)
+```
+
+## LabelCount (Count Rank) Encoding
+
+カテゴリ変数の出現回数が多い順に順位づけ
+```py
+count_rank = df.groupby('city')['target'].count().rank(ascending=False)
+df['count_rank'] = df['city'].map(count_rank)
+```
+
+## Target Encoding
+
+Mean EncodingやLikelihood Encodingとも呼ばれる手法
+目的変数（Target）に対してカテゴリ変数の処理をおこなう
+
+目的変数が２値のみをとるブーリアン型であればカテゴリ毎の確率を、
+目的変数が数値であればカテゴリ毎の平均を取るというもの。
+
+ただし、データセットが学習データとテストデータに分かれている場合、
+テストデータの目的変数は未知であるため、演算は学習データに対しておこない、得られた特徴量をテストデータ内のカテゴリへ適用する。
+この部分に注意しないと、Cross Validation をおこなったときにデータがリークすることになってしまう。
+```py
+# method 1
+target_mean = df.groupby('city').target.mean()
+df['target_enc'] = df['city'].map(target_mean)
+
+# method 2
+df['target_enc'] = df.groupby('city')['target'].transform('mean')
+```
+
+## One hot encoding
+```py
+oh_enc = pd.get_dummies(df['city'], prefix='gender')
+df = pd.concat([df, oh_enc], axis=1)
+```
+
+## Frequency Encoding
+```py
+for col in cat_cols:
+    freq_encoding = train[col].value_counts()
+    # ラベルの出現回数で置換
+    train[col] = train[col].map(freq_encoding)
+    test[col] = test[col].map(freq_encoding)
 ```
 
 ## clipping
@@ -1327,17 +1409,6 @@ train['col_name_clipped'] = np.clip(train['col_name'], upperbound, lowerbound)
 train['col_name_nomalize'] = (train['col_name'] - train['col_name'].mean() ) / train['col_name'].std()
 ```
 
-## カテゴリ変数のみ Label Eoncoding する
-```py
-from sklearn.preprocessing import LabelEncoder
-
-for col in train.columns:
-    if train[col].dtype == 'object':
-        le = LabelEncoder()
-        le.fit(list(train[col].astype(str).values) + list(test[col].astype(str).values))
-        train[col] = le.transform(list(train[col].astype(str).values))
-        test[col] = le.transform(list(test[col].astype(str).values))
-```
 
 ## 行のNAN数を新しい特徴量に
 ```py
@@ -1434,16 +1505,7 @@ def freq_enc(train, test, cols):
 
 freq_enc(train, test, feature_list)
 ```
-## 特徴量同士を結合した特徴量を作成し Label Encoding
-```py
-def conb_enc(col1, col2, train, test):
-    nm = col1 + '_' + col2
-    train[new_col] = train[col1].astype(str) + '_' + train[col2].astype(str)
-    test[new_col] = test[col1].astype(str) + '_' + test[col2].astype(str)
-    le = LabelEncoder()
-    le.fit(list(train[new_col].astype(str).values) + list(test[new_col].astype(str).values))
-    train[new_col] = le.transform(list(train[new_col].astype(str).values))
-    test[new_col] = le.transform(list(test[new_col].astype(str).values))
+
 
 ## あるカラム群の欠損の数の合計を特徴量にする
 ```py
