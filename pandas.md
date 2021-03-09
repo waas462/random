@@ -105,6 +105,11 @@ df2.groupby(['week_n', 'early_week', 'early_week_tmp', 'test']).count().index
 df[df['colum name'].str.contains('find word')]
 ```
 
+## 特定の文字列を含むカラムを抽出
+```py
+train.columns[train.columns.str.startswith('language')]
+```
+
 ## 特定の型の列だけを取ってくる
 ```py
 new = df.select_dtypes(['object'])

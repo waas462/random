@@ -2,7 +2,8 @@
 参考：
 - [Google Colabをプロ仕様に設定する](https://webbigdata.jp/ai/post-7248)
 - [GitHub-Kaggle / kaggle-api：公式のKaggle API](https://github.com/Kaggle/kaggle-api)
-
+- https://github.com/nejumi/kaggle_memo
+-
 # API準備
 ```py
 # insatall
